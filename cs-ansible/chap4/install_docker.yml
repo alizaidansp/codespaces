@@ -1,0 +1,28 @@
+# ansible-playbook -i prod install-docker.yml -u devops --private-key ~/.ssh/id_rsa
+
+- hosts: app
+  become: yes
+  tasks:
+    - name: Install required packages
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+        state: present
+
+    - name: Add Docker CE repo
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+
+    - name: Install Docker CE
+      yum:
+        name: docker-ce
+        state: present
+
+    - name: Start Docker manually (no systemd)
+      shell: "nohup dockerd --host=unix:///var/run/docker.sock > /var/log/dockerd.log 2>&1 &"
+      args:
+        creates: /var/run/docker.sock
+
